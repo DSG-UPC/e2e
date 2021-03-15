@@ -53,6 +53,7 @@ contract Subscriber {
         pushToMed(msg.sender, _amount);
     }
 
+
     function test(address _med) public returns (address) {
         MediatorInterface m = MediatorInterface(_med);
         address ret = m.getAddr();
