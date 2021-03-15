@@ -50,7 +50,6 @@ contract Subscriber {
                 meds[msg.sender].provs[_prov].used == true,
             "The current payment relationship is not established. Check again the details."
         );
-
         pushToMed(msg.sender, _amount);
     }
 
