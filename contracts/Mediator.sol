@@ -9,8 +9,8 @@ contract Mediator is MediatorInterface {
     struct subInfo {
         bool exists;
         bool readyToPull;
-        uint256 deposit;
-        /* ADD HOLD TIME LATER */
+        uint256 limit;
+        uint256 availableTokens;
     }
     struct provInfo {
         mapping(address => subInfo) subs;
@@ -19,8 +19,6 @@ contract Mediator is MediatorInterface {
     address public owner;
     mapping(address => provInfo) provs;
     DDToken public tok;
-
-    event breakPoint();
 
     /* CONSTRUCTOR, FALLBACK, MODIFIERS */
     constructor() public {
@@ -52,7 +50,7 @@ contract Mediator is MediatorInterface {
     function addSubsToProv(
         address _prov,
         address _sub,
-        uint256 _amount
+        uint256 _limit
     ) public override {
         require(
             provs[_prov].subs[_sub].exists != true,
@@ -60,8 +58,7 @@ contract Mediator is MediatorInterface {
         );
         provs[_prov].subs[_sub].exists = true;
         provs[_prov].subs[_sub].readyToPull = false;
-        provs[_prov].subs[_sub].deposit = _amount;
-        emit breakPoint();
+        provs[_prov].subs[_sub].limit = _limit;
     }
 
     function enableCharging(address _prov, address _sub) public override {
@@ -73,7 +70,10 @@ contract Mediator is MediatorInterface {
     }
 
     /* PULL PAYMENT FUNCTION CALLED BY THE PROVIDER. */
-    function providerPullFromMed(address payable _sub) public override {
+    function providerPullFromMed(address payable _sub, uint256 _amount)
+        public
+        override
+    {
         require(
             provs[msg.sender].subs[_sub].exists == true,
             "The subscriber has no agreement with the calling provider. Choose a valid subscriber to pull from."
@@ -83,18 +83,21 @@ contract Mediator is MediatorInterface {
             "The subscriber currently has an agreement with the calling provider, but the money cannot be withdrawn yet. Check again the terms of the agreement."
         );
 
-        uint256 dep = provs[msg.sender].subs[_sub].deposit;
-        //provs[msg.sender].subs[_sub].deposit = 0;
-        disableCharging(msg.sender, _sub);
+        provs[msg.sender].subs[_sub].availableTokens -= _amount;
 
-        //tok.transfer(msg.sender, dep);
-        /* Subscriber auxSub = Subscriber(_sub);
-        auxSub.directDebit(msg.sender, dep); */
-        tok.transfer(msg.sender, dep);
+        disableCharging(msg.sender, _sub);
+        tok.transfer(msg.sender, _amount);
     }
 
-    function medPullFromSub(address _prov, address payable _sub, uint256 _amount) public override {
+    function medPullFromSub(
+        address _prov,
+        address payable _sub,
+        uint256 _amount
+    ) public override {
         Subscriber auxSub = Subscriber(_sub);
+
+        provs[_prov].subs[_sub].availableTokens += _amount;
+
         auxSub.directDebit(_prov, _amount);
     }
 }

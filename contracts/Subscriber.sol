@@ -6,6 +6,7 @@ import "./MediatorInterface.sol";
 contract Subscriber {
     struct provInfo {
         bool used;
+        uint256 limit;
     }
     struct medInfo {
         bool used;
@@ -14,8 +15,6 @@ contract Subscriber {
 
     DDToken public tok;
     mapping(address => medInfo) public meds;
-
-    event breakPoint();
 
     constructor() public {}
 
@@ -28,31 +27,26 @@ contract Subscriber {
     function subscribeToProv(
         address _prov,
         address _med,
-        uint256 _amount
+        uint256 _limit
     ) public {
         meds[_med].used = true;
         meds[_med].provs[_prov].used = true;
-
-        emit breakPoint();
+        meds[_med].provs[_prov].limit = _limit;
 
         MediatorInterface auxMed = MediatorInterface(_med);
-        auxMed.addSubsToProv(_prov, address(this), _amount);
-    }
-
-    function pushToMed(address _med, uint256 _amount) public {
-        tok.transfer(_med, _amount);
+        auxMed.addSubsToProv(_prov, address(this), _limit);
     }
 
     function directDebit(address _prov, uint256 _amount) public {
         /* CALLED BY MEDIATOR TO CLAIM TOKENS FOR A SPECIFIC SUBSCRIPTION */
         require(
             meds[msg.sender].used == true &&
-                meds[msg.sender].provs[_prov].used == true,
+                meds[msg.sender].provs[_prov].used == true &&
+                meds[msg.sender].provs[_prov].limit >= _amount,
             "The current payment relationship is not established. Check again the details."
         );
-        pushToMed(msg.sender, _amount);
+        tok.transfer(msg.sender, _amount);
     }
-
 
     function test(address _med) public returns (address) {
         MediatorInterface m = MediatorInterface(_med);

@@ -17,7 +17,7 @@ contract MediatorInterface {
 
     function disableCharging(address _prov, address _sub) public virtual {}
 
-    function providerPullFromMed(address payable _sub) public virtual {}
+    function providerPullFromMed(address payable _sub, uint _amount) public virtual {}
 
     function medPullFromSub(address _prov, address payable _sub, uint256 amount) public virtual {}
 }
