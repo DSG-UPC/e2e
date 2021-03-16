@@ -163,7 +163,7 @@
         "id": 299,
         "nodeType": "ImportDirective",
         "scope": 351,
-        "sourceUnit": 600,
+        "sourceUnit": 519,
         "src": "60:26:2",
         "symbolAliases": [],
         "unitAlias": ""
@@ -803,7 +803,7 @@
       },
       {
         "attributes": {
-          "SourceUnit": 600,
+          "SourceUnit": 519,
           "absolutePath": "/D/Master_MIRI/Work/e2e/contracts/Subscriber.sol",
           "file": "./Subscriber.sol",
           "scope": 351,
@@ -1524,7 +1524,7 @@
   },
   "networks": {},
   "schemaVersion": "3.3.4",
-  "updatedAt": "2021-03-16T08:16:50.604Z",
+  "updatedAt": "2021-03-16T09:03:28.918Z",
   "devdoc": {
     "methods": {}
   },
