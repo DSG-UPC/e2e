@@ -1,12 +1,12 @@
 pragma solidity >=0.6.0 <0.9.0;
 
 import "./DDToken.sol";
-import "./MediatorInterface.sol";
+import "./Mediator.sol";
 
 contract Subscriber {
     struct provInfo {
         bool used;
-        uint256 limit;
+        uint limit;
     }
     struct medInfo {
         bool used;
@@ -26,18 +26,18 @@ contract Subscriber {
 
     function subscribeToProv(
         address _prov,
-        address _med,
-        uint256 _limit
+        address payable _med,
+        uint _limit
     ) public {
         meds[_med].used = true;
         meds[_med].provs[_prov].used = true;
         meds[_med].provs[_prov].limit = _limit;
 
-        MediatorInterface auxMed = MediatorInterface(_med);
+        Mediator auxMed = Mediator(_med);
         auxMed.addSubsToProv(_prov, address(this), _limit);
     }
 
-    function directDebit(address _prov, uint256 _amount) public {
+    function directDebit(address _prov, uint _amount) public {
         /* CALLED BY MEDIATOR TO CLAIM TOKENS FOR A SPECIFIC SUBSCRIPTION */
         require(
             meds[msg.sender].used == true &&
@@ -48,13 +48,15 @@ contract Subscriber {
         tok.transfer(msg.sender, _amount);
     }
 
-    function recoverFunds(address _prov, address _med) public {
-        MediatorInterface m = MediatorInterface(_med);
+    function recoverFunds(address _prov, address payable _med) public {
+        Mediator m = Mediator(_med);
         m.subPullFromMed(_prov);
+
+
     }
 
-    function test(address _med) public view returns (address) {
-        MediatorInterface m = MediatorInterface(_med);
+    function test(address payable _med) public view returns (address) {
+        Mediator m = Mediator(_med);
         address ret = m.getAddr();
         return ret;
     }

@@ -29,4 +29,6 @@ contract MediatorInterface {
     ) public virtual {}
 
     function subPullFromMed(address _prov) public virtual {}
+
+    function retToSub() public virtual {}
 }

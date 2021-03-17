@@ -2,15 +2,14 @@ pragma solidity >=0.6.0 <0.9.0;
 
 import "./DDToken.sol";
 import "./Subscriber.sol";
-import "./MediatorInterface.sol";
 
-contract Mediator is MediatorInterface {
+contract Mediator {
     /* GLOBAL VARIABLES */
     struct subInfo {
         bool exists;
         bool readyToPull;
-        uint256 limit;
-        uint256 availableTokens;
+        uint limit;
+        uint availableTokens;
     }
     struct provInfo {
         mapping(address => subInfo) subs;
@@ -33,7 +32,7 @@ contract Mediator is MediatorInterface {
     }
 
     /* GETTERS, SETTERS */
-    function getAddr() public view override returns (address) {
+    function getAddr() public view returns (address) {
         address addr = address(this);
         return addr;
     }
@@ -44,14 +43,14 @@ contract Mediator is MediatorInterface {
 
     /* GENERAL FUNCTIONS */
     /* function withdrawToProvider() public {
-        uint256 amount = getBalance();
+        uint amount = getBalance();
         msg.sender.call.value(amount)("");
     } */
     function addSubsToProv(
         address _prov,
         address _sub,
-        uint256 _limit
-    ) public override {
+        uint _limit
+    ) public {
         require(
             provs[_prov].subs[_sub].exists != true,
             "This specific subscriber-provider relationship is already esttablished."
@@ -61,19 +60,16 @@ contract Mediator is MediatorInterface {
         provs[_prov].subs[_sub].limit = _limit;
     }
 
-    function enableCharging(address _prov, address _sub) public override {
+    function enableCharging(address _prov, address _sub) public {
         provs[_prov].subs[_sub].readyToPull = true;
     }
 
-    function disableCharging(address _prov, address _sub) public override {
+    function disableCharging(address _prov, address _sub) public {
         provs[_prov].subs[_sub].readyToPull = false;
     }
 
     /* PULL PAYMENT FUNCTION CALLED BY THE PROVIDER. */
-    function providerPullFromMed(address payable _sub, uint256 _amount)
-        public
-        override
-    {
+    function providerPullFromMed(address payable _sub, uint _amount) public {
         require(
             provs[msg.sender].subs[_sub].exists == true,
             "The subscriber has no agreement with the calling provider. Choose a valid subscriber to pull from."
@@ -92,8 +88,8 @@ contract Mediator is MediatorInterface {
     function medPullFromSub(
         address _prov,
         address payable _sub,
-        uint256 _amount
-    ) public override {
+        uint _amount
+    ) public {
         Subscriber auxSub = Subscriber(_sub);
 
         provs[_prov].subs[_sub].availableTokens += _amount;
@@ -101,13 +97,26 @@ contract Mediator is MediatorInterface {
         auxSub.directDebit(_prov, _amount);
     }
 
-    function subPullFromMed(address _prov)public override {
-        require(provs[_prov].subs[msg.sender].readyToPull == false, "The deposited amount is already available for the Provider to withdraw. Subscriber can't get tokens back at this stage.");
-        require(provs[_prov].subs[msg.sender].exists == true, "The Subscriber-Provider agreement does not exist");
+    function subPullFromMed(address _prov) public {
+        require(
+            provs[_prov].subs[msg.sender].readyToPull == false,
+            "The deposited amount is already available for the Provider to withdraw. Subscriber can't get tokens back at this stage."
+        );
+        require(
+            provs[_prov].subs[msg.sender].exists == true,
+            "The Subscriber-Provider agreement does not exist"
+        );
 
         uint temp = provs[_prov].subs[msg.sender].availableTokens;
         provs[_prov].subs[msg.sender].availableTokens = 0;
 
         tok.transfer(msg.sender, temp);
+    }
+
+    function retToSub(address _sub, address _prov) public {
+        uint temp = provs[_prov].subs[_sub].availableTokens;
+        provs[_prov].subs[_sub].availableTokens = 0;
+
+        tok.transfer(_sub, temp);
     }
 }
