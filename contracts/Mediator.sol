@@ -100,4 +100,14 @@ contract Mediator is MediatorInterface {
 
         auxSub.directDebit(_prov, _amount);
     }
+
+    function subPullFromMed(address _prov)public override {
+        require(provs[_prov].subs[msg.sender].readyToPull == false, "The deposited amount is already available for the Provider to withdraw. Subscriber can't get tokens back at this stage.");
+        require(provs[_prov].subs[msg.sender].exists == true, "The Subscriber-Provider agreement does not exist");
+
+        uint temp = provs[_prov].subs[msg.sender].availableTokens;
+        provs[_prov].subs[msg.sender].availableTokens = 0;
+
+        tok.transfer(msg.sender, temp);
+    }
 }

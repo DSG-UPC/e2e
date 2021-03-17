@@ -48,7 +48,12 @@ contract Subscriber {
         tok.transfer(msg.sender, _amount);
     }
 
-    function test(address _med) public returns (address) {
+    function recoverFunds(address _prov, address _med) public {
+        MediatorInterface m = MediatorInterface(_med);
+        m.subPullFromMed(_prov);
+    }
+
+    function test(address _med) public view returns (address) {
         MediatorInterface m = MediatorInterface(_med);
         address ret = m.getAddr();
         return ret;
