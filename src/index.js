@@ -30,7 +30,15 @@ async function getNet() {
 }
 
 function getContracts() {
-    tokAddress = "0xc2469414f7eFf28e9aD3c1b87989Dfdc804EC4BB";
+    tokAddress = "----";
+    tokAbi = require('../build/contracts/DDToken.json').abi;
+    tok = new web3.eth.Contract(tokAbi, tokAddress);
+
+    tokAddress = "----";
+    tokAbi = require('../build/contracts/DDToken.json').abi;
+    tok = new web3.eth.Contract(tokAbi, tokAddress);
+
+    tokAddress = "----";
     tokAbi = require('../build/contracts/DDToken.json').abi;
     tok = new web3.eth.Contract(tokAbi, tokAddress);
 }
