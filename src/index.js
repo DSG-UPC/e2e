@@ -42,21 +42,21 @@ async function getNet() {
 }
 
 function getContracts() {
-    tokAddress = "0x99391F98975d02f65cF2209E5F3137303cB45677";
+/*     tokAddress = "0x99391F98975d02f65cF2209E5F3137303cB45677";
     tokAbi = require('../build/contracts/DDToken.json').abi;
-    tok = new web3.eth.Contract(tokAbi, tokAddress);
+    tok = new web3.eth.Contract(tokAbi, tokAddress); */
 
-    subAddress = "0x7E7E0EFEcfB60f475daeaB9E58F812E43757080c";
+    subAddress = "0x586De1E8864abE6097Ca7E839d63D43Ca5fBf4E0";
     subAbi = require('../build/contracts/Subscriber.json').abi;
     sub = new web3.eth.Contract(subAbi, subAddress);
 
-    medAddress = "0x93e799E2a0BDf68Ae21FaE624e37Ab9E287d1CA0";
+/*     medAddress = "0x93e799E2a0BDf68Ae21FaE624e37Ab9E287d1CA0";
     medAbi = require('../build/contracts/Mediator.json').abi;
     med = new web3.eth.Contract(medAbi, medAddress);
 
     provAddress = "0xaf2B1B61314B7A4FC4C59bc8A098EA710041838e";
     provAbi = require('../build/contracts/Provider.json').abi;
-    prov = new web3.eth.Contract(provAbi, provAddress);
+    prov = new web3.eth.Contract(provAbi, provAddress); */
 }
 
 function schedulePayment(sender, receiver, amount, secs) {
@@ -132,7 +132,10 @@ app.get('/balance', (req, res) => {
 
 app.get('/subscribe', (req, res) => {
     /* REQUEST HAS TO INCLUDE BOTH THE ACCOUNT OF THE SUBSCRIBER CONTRACT, AND THE ACCOUNT OF THE CLIENT. IS IT THE SAME? */
-    sub.methods.setToken("0xC7389bFB7d7Daa788Fc85A66D828BB0C6698D707").send({ from: accounts[0] }).then(() => {
+/*     sub.methods.setToken("0xC7389bFB7d7Daa788Fc85A66D828BB0C6698D707").send({ from: accounts[0] }).then(() => {
+        res.send(`Subscription created.`)
+    }) */
+    sub.methods.subscribeToProv("0xebF313641390E82dFdf5edF8D59747d84e0a68Bd", "0x2e35A4Ea56DB342E2649a4495576C5e8b169e281", "50").send({ from: accounts[0] }).then(() => {
         res.send(`Subscription created.`)
     })
 })

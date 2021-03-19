@@ -15,6 +15,8 @@ contract Subscriber {
 
     DDToken public tok;
     mapping(address => medInfo) public meds;
+    address payable public lastMed;
+    address public lastProv;
 
     constructor() public {}
 
@@ -33,8 +35,11 @@ contract Subscriber {
         meds[_med].provs[_prov].used = true;
         meds[_med].provs[_prov].limit = _limit;
 
-        Mediator auxMed = Mediator(_med);
-        auxMed.addSubsToProv(_prov, address(this), _limit);
+        lastMed = _med;
+        lastProv = _prov;
+
+/*         Mediator auxMed = Mediator(_med);
+        auxMed.addSubsToProv(_prov, address(this), _limit); */
     }
 
     function directDebit(address _prov, uint _amount) public {
