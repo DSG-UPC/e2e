@@ -42,11 +42,11 @@ async function getNet() {
 }
 
 function getContracts() {
-/*     tokAddress = "0x99391F98975d02f65cF2209E5F3137303cB45677";
+    tokAddress = "0x8098dB5F165dF7e0E905dE0316659d854C6C0dd1";
     tokAbi = require('../build/contracts/DDToken.json').abi;
-    tok = new web3.eth.Contract(tokAbi, tokAddress); */
+    tok = new web3.eth.Contract(tokAbi, tokAddress);
 
-    subAddress = "0x586De1E8864abE6097Ca7E839d63D43Ca5fBf4E0";
+    subAddress = "0x6be3473D8544000554541dA79Bc544f007937B87";
     subAbi = require('../build/contracts/Subscriber.json').abi;
     sub = new web3.eth.Contract(subAbi, subAddress);
 
@@ -135,7 +135,7 @@ app.get('/subscribe', (req, res) => {
 /*     sub.methods.setToken("0xC7389bFB7d7Daa788Fc85A66D828BB0C6698D707").send({ from: accounts[0] }).then(() => {
         res.send(`Subscription created.`)
     }) */
-    sub.methods.subscribeToProv("0xebF313641390E82dFdf5edF8D59747d84e0a68Bd", "0x2e35A4Ea56DB342E2649a4495576C5e8b169e281", "50").send({ from: accounts[0] }).then(() => {
+    sub.methods.subscribeToProv("0x584b0957E613dF0e123cfA65BAf3c70E08a68D29", "0xdAecfC52068eD27aD0C93b8bD980Fee6519324d6", "50").send({ from: accounts[0], gas:5000000}).then(() => {
         res.send(`Subscription created.`)
     })
 })
