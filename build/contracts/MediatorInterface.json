@@ -141,7 +141,7 @@
   "sourceMap": "90:770:2:-:0;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;90:770:2;;;;;;;",
   "deployedSourceMap": "90:770:2:-:0;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;90:770:2;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;219:120;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;219:120:2;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;347:70;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;347:70:2;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;756:56;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;756:56:2;;;;;;;;;;;;;;;;;;;:::i;:::-;;504:108;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;504:108:2;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;620:128;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;620:128:2;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;152:59;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;820:37;;;:::i;:::-;;425:71;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;425:71:2;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;219:120;;;;:::o;347:70::-;;;:::o;756:56::-;;:::o;504:108::-;;;:::o;620:128::-;;;;:::o;152:59::-;200:7;152:59;:::o;820:37::-;:::o;425:71::-;;;:::o",
   "source": "pragma solidity >=0.6.0 <0.9.0;\r\n\r\nimport \"./DDToken.sol\";\r\nimport \"./Subscriber.sol\";\r\n\r\ncontract MediatorInterface {\r\n    /* GETTERS, SETTERS */\r\n    function getAddr() public view virtual returns (address) {}\r\n\r\n    function addSubsToProv(\r\n        address _prov,\r\n        address _sub,\r\n        uint256 _amount\r\n    ) public virtual {}\r\n\r\n    function enableCharging(address _prov, address _sub) public virtual {}\r\n\r\n    function disableCharging(address _prov, address _sub) public virtual {}\r\n\r\n    function providerPullFromMed(address payable _sub, uint256 _amount)\r\n        public\r\n        virtual\r\n    {}\r\n\r\n    function medPullFromSub(\r\n        address _prov,\r\n        address payable _sub,\r\n        uint256 amount\r\n    ) public virtual {}\r\n\r\n    function subPullFromMed(address _prov) public virtual {}\r\n\r\n    function retToSub() public virtual {}\r\n}\r\n",
-  "sourcePath": "D:\\Master_MIRI\\Work\\e2e\\contracts\\MediatorInterface.sol",
+  "sourcePath": "D:/Master_MIRI/Work/e2e/contracts/MediatorInterface.sol",
   "ast": {
     "absolutePath": "/D/Master_MIRI/Work/e2e/contracts/MediatorInterface.sol",
     "exportedSymbols": {
@@ -1777,7 +1777,7 @@
   },
   "networks": {},
   "schemaVersion": "3.3.4",
-  "updatedAt": "2021-03-17T09:06:55.337Z",
+  "updatedAt": "2021-03-19T11:34:53.290Z",
   "devdoc": {
     "methods": {}
   },

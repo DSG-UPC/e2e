@@ -23,6 +23,18 @@ var tokAddress;
 var tokAbi;
 var tok;
 
+var subAddress;
+var subAbi;
+var sub;
+
+var medAddress;
+var medAbi;
+var med;
+
+var provAddress;
+var provAbi;
+var prov;
+
 async function getNet() {
     web3 = new Web3('http://localhost:8545');
     accounts = await web3.eth.getAccounts();
@@ -30,17 +42,21 @@ async function getNet() {
 }
 
 function getContracts() {
-    tokAddress = "----";
+    tokAddress = "0x99391F98975d02f65cF2209E5F3137303cB45677";
     tokAbi = require('../build/contracts/DDToken.json').abi;
     tok = new web3.eth.Contract(tokAbi, tokAddress);
 
-    tokAddress = "----";
-    tokAbi = require('../build/contracts/DDToken.json').abi;
-    tok = new web3.eth.Contract(tokAbi, tokAddress);
+    subAddress = "0x7E7E0EFEcfB60f475daeaB9E58F812E43757080c";
+    subAbi = require('../build/contracts/Subscriber.json').abi;
+    sub = new web3.eth.Contract(subAbi, subAddress);
 
-    tokAddress = "----";
-    tokAbi = require('../build/contracts/DDToken.json').abi;
-    tok = new web3.eth.Contract(tokAbi, tokAddress);
+    medAddress = "0x93e799E2a0BDf68Ae21FaE624e37Ab9E287d1CA0";
+    medAbi = require('../build/contracts/Mediator.json').abi;
+    med = new web3.eth.Contract(medAbi, medAddress);
+
+    provAddress = "0xaf2B1B61314B7A4FC4C59bc8A098EA710041838e";
+    provAbi = require('../build/contracts/Provider.json').abi;
+    prov = new web3.eth.Contract(provAbi, provAddress);
 }
 
 function schedulePayment(sender, receiver, amount, secs) {
@@ -70,7 +86,7 @@ app.get('/addPayment/:sender/:receiver/:amount/:secs', (req, res) => {
     } else {
         paymentsMapping.set(`${req.params.sender}-to-${req.params.receiver}`, schedulePayment(req.params.sender, req.params.receiver, req.params.amount, req.params.secs))
         paymentsMapping.get(`${req.params.sender}-to-${req.params.receiver}`).start()
-        console.log(typeof( paymentsMapping.get(`${req.params.sender}-to-${req.params.receiver}`)))
+        console.log(typeof (paymentsMapping.get(`${req.params.sender}-to-${req.params.receiver}`)))
         res.send(`autoTransfer task started. Check the console to see balance updates.`)
     }
 })
@@ -100,6 +116,25 @@ app.get('/changePayment/:sender/:receiver/:amount/:secs', (req, res) => {
 app.get('/seePayments', (req, res) => {
     console.log(paymentsMapping)
     res.send(cron.getTasks())
+})
+
+app.get('/balance', (req, res) => {
+    try {
+        tok.methods.balanceOf(String(req.query.acc)).call().then(bal => {
+            res.send(`<h1>Balance of the account is ${bal}</h1>`)
+        })
+    }
+    catch (e) {
+        console.log(e)
+        res.send(`There was an error reading the balance of the account.`)
+    }
+})
+
+app.get('/subscribe', (req, res) => {
+    /* REQUEST HAS TO INCLUDE BOTH THE ACCOUNT OF THE SUBSCRIBER CONTRACT, AND THE ACCOUNT OF THE CLIENT. IS IT THE SAME? */
+    sub.methods.setToken("0xC7389bFB7d7Daa788Fc85A66D828BB0C6698D707").send({ from: accounts[0] }).then(() => {
+        res.send(`Subscription created.`)
+    })
 })
 
 app.listen(3000, () => {
