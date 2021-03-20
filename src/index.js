@@ -42,21 +42,21 @@ async function getNet() {
 }
 
 function getContracts() {
-    tokAddress = "0x8098dB5F165dF7e0E905dE0316659d854C6C0dd1";
+    tokAddress = "0x3b6E425fF19740C355f54Df6d162e6Daa5215526";
     tokAbi = require('../build/contracts/DDToken.json').abi;
     tok = new web3.eth.Contract(tokAbi, tokAddress);
 
-    subAddress = "0x6be3473D8544000554541dA79Bc544f007937B87";
+    subAddress = "0x8938C6d9d74102b92303f41f31309F6D151e99d9";
     subAbi = require('../build/contracts/Subscriber.json').abi;
     sub = new web3.eth.Contract(subAbi, subAddress);
 
-/*     medAddress = "0x93e799E2a0BDf68Ae21FaE624e37Ab9E287d1CA0";
+    medAddress = "0x10e11DBFF18b53dE8F8b68999865968450808e54";
     medAbi = require('../build/contracts/Mediator.json').abi;
     med = new web3.eth.Contract(medAbi, medAddress);
 
-    provAddress = "0xaf2B1B61314B7A4FC4C59bc8A098EA710041838e";
+    provAddress = "0x0820ce468f9fC8F7C3202ecceb3B2E96e33F6aE9";
     provAbi = require('../build/contracts/Provider.json').abi;
-    prov = new web3.eth.Contract(provAbi, provAddress); */
+    prov = new web3.eth.Contract(provAbi, provAddress);
 }
 
 function schedulePayment(sender, receiver, amount, secs) {
@@ -135,8 +135,14 @@ app.get('/subscribe', (req, res) => {
 /*     sub.methods.setToken("0xC7389bFB7d7Daa788Fc85A66D828BB0C6698D707").send({ from: accounts[0] }).then(() => {
         res.send(`Subscription created.`)
     }) */
-    sub.methods.subscribeToProv("0x584b0957E613dF0e123cfA65BAf3c70E08a68D29", "0xdAecfC52068eD27aD0C93b8bD980Fee6519324d6", "50").send({ from: accounts[0], gas:5000000}).then(() => {
+    sub.methods.subscribeToProv(String(req.query.prov), String(req.query.med), parseInt(req.query.limit)).send({ from: accounts[0], gas:5000000}).then(() => {
         res.send(`Subscription created.`)
+    })
+})
+
+app.get('/pullSub', (req, res) => {
+    med.methods.medPullFromSub(String(req.query.prov), String(req.query.sub), parseInt(req.query.amount)).send({ from: accounts[0], gas:5000000}).then(() => {
+        res.send(`Pulled tokens. Check balances.`)
     })
 })
 

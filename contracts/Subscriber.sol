@@ -6,7 +6,7 @@ import "./Mediator.sol";
 contract Subscriber {
     struct provInfo {
         bool used;
-        uint limit;
+        uint256 limit;
     }
     struct medInfo {
         bool used;
@@ -29,7 +29,7 @@ contract Subscriber {
     function subscribeToProv(
         address _prov,
         address payable _med,
-        uint _limit
+        uint256 _limit
     ) public {
         meds[_med].used = true;
         meds[_med].provs[_prov].used = true;
@@ -38,17 +38,17 @@ contract Subscriber {
         lastMed = _med;
         lastProv = _prov;
 
-/*         Mediator auxMed = Mediator(_med);
-        auxMed.addSubsToProv(_prov, address(this), _limit); */
+        Mediator auxMed = Mediator(_med);
+        auxMed.addSubsToProv(_prov, address(this), _limit);
     }
 
-    function directDebit(address _prov, uint _amount) public {
+    function directDebit(address _prov, uint256 _amount) public {
         /* CALLED BY MEDIATOR TO CLAIM TOKENS FOR A SPECIFIC SUBSCRIPTION */
         require(
             meds[msg.sender].used == true &&
                 meds[msg.sender].provs[_prov].used == true &&
                 meds[msg.sender].provs[_prov].limit >= _amount,
-            "The current payment relationship is not established. Check again the details."
+            "The current payment relationship is not established, or the payment surpassed the agreed limit.. Check again the details."
         );
         tok.transfer(msg.sender, _amount);
     }
@@ -56,8 +56,6 @@ contract Subscriber {
     function recoverFunds(address _prov, address payable _med) public {
         Mediator m = Mediator(_med);
         m.subPullFromMed(_prov);
-
-
     }
 
     function test(address payable _med) public view returns (address) {
