@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node_modules/.bin/truffle test"
+    "test": "node_modules/.bin/truffle test",
+    "server": "node ./src/index.js"
   },
   "author": "",
   "license": "ISC",

@@ -33,7 +33,7 @@ contract Provider {
     }
 
     /* ADD: HOW MUCH DO I CHARGE? */
-    function testPulling(address payable _med, address payable _sub, uint _amount) public {
+    function pull(address payable _med, address payable _sub, uint _amount) public {
         Mediator(_med).providerPullFromMed(_sub, _amount);
     }
 }

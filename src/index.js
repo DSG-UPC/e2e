@@ -42,22 +42,39 @@ async function getNet() {
 }
 
 function getContracts() {
-    tokAddress = "0x3b6E425fF19740C355f54Df6d162e6Daa5215526";
+    tokAddress = "----";
     tokAbi = require('../build/contracts/DDToken.json').abi;
     tok = new web3.eth.Contract(tokAbi, tokAddress);
 
-    subAddress = "0x8938C6d9d74102b92303f41f31309F6D151e99d9";
+    subAddress = "----";
     subAbi = require('../build/contracts/Subscriber.json').abi;
     sub = new web3.eth.Contract(subAbi, subAddress);
 
-    medAddress = "0x10e11DBFF18b53dE8F8b68999865968450808e54";
+    medAddress = "----";
     medAbi = require('../build/contracts/Mediator.json').abi;
     med = new web3.eth.Contract(medAbi, medAddress);
 
-    provAddress = "0x0820ce468f9fC8F7C3202ecceb3B2E96e33F6aE9";
+    provAddress = "----";
     provAbi = require('../build/contracts/Provider.json').abi;
     prov = new web3.eth.Contract(provAbi, provAddress);
 }
+
+function getSub(at) {
+    return new web3.eth.Contract(require('../build/contracts/Subscriber.json').abi, at)
+}
+
+function getMed(at) {
+    return new web3.eth.Contract(require('../build/contracts/Mediator.json').abi, at)
+}
+
+function getProv(at) {
+    return new web3.eth.Contract(require('../build/contracts/Provider.json').abi, at)
+}
+
+function getTok(at) {
+    return new web3.eth.Contract(require('../build/contracts/DDToken.json').abi, at)
+}
+
 
 function schedulePayment(sender, receiver, amount, secs) {
     var task = cron.schedule(`*/${secs} * * * * *`, async () => {
@@ -69,6 +86,39 @@ function schedulePayment(sender, receiver, amount, secs) {
         console.log(`Balances are ${temp1} and ${temp2}.`)
     }, {
         scheduled: false
+    })
+    return task
+}
+
+function periodicPayment(s, m, p, t, l, periodicity, num) {
+    var time
+    switch (periodicity) {
+        case `second`:
+            time = `*/${num} * * * * *`
+            break
+        case `day`:
+            time = `* * * 1 * *`
+            break
+        case `month`:
+            time = `* * * * ${num} *`
+            break
+        default:
+            time = `*/${10} * * * * *`
+    }
+    var task = cron.schedule(time, async () => {
+        console.log("Generting automated payment.")
+        var temp1 = await getTok(t).methods.balanceOf(s).call()
+        var temp2 = await getTok(t).methods.balanceOf(m).call()
+        console.log(`${temp1} -- ${temp2}`)
+        var charger = getMed(m)
+        console.log('Starting transfer.')
+        charger.methods.medPullFromSub(p, s, l).send({ from: accounts[0], gas: 5000000 }).then(() => {
+            console.log(`Balances are ${temp1} and ${temp2}.`)
+        }, () => {
+            console.log(`Something went wrong.`)
+        })
+    }, {
+        scheduled: true
     })
     return task
 }
@@ -132,20 +182,54 @@ app.get('/balance', (req, res) => {
 
 app.get('/subscribe', (req, res) => {
     /* REQUEST HAS TO INCLUDE BOTH THE ACCOUNT OF THE SUBSCRIBER CONTRACT, AND THE ACCOUNT OF THE CLIENT. IS IT THE SAME? */
-/*     sub.methods.setToken("0xC7389bFB7d7Daa788Fc85A66D828BB0C6698D707").send({ from: accounts[0] }).then(() => {
-        res.send(`Subscription created.`)
-    }) */
-    sub.methods.subscribeToProv(String(req.query.prov), String(req.query.med), parseInt(req.query.limit)).send({ from: accounts[0], gas:5000000}).then(() => {
-        res.send(`Subscription created.`)
+    /* AMOUNT PULLED PERIODICALLY IS SET TO TE LIMIT. IS THE AMOUNT FIXED, OR VARIABLE? IF VARIABLE, HOW DOES IT CHANGE? FOR TESTING, MEDIATOR CHARGES THE MAX ALLOWED AMOUNT TO SUB.*/
+    getSub(String(req.query.sub)).methods.subscribeToProv(String(req.query.prov), String(req.query.med), parseInt(req.query.limit)).send({ from: accounts[0], gas: 5000000 })
+        .then(() => {
+            paymentsMapping.set(`${String(req.query.sub)}-${String(req.query.med)}-${String(req.query.prov)}`, periodicPayment(String(req.query.sub), String(req.query.med), String(req.query.prov), String(req.query.tok), parseInt(req.query.limit), String(req.query.periodicity), parseInt(req.query.num)))
+            res.send(`Subscription created. Generating automated payment task.`)
+        }, () => {
+            res.send(`Request to Blockchain failed.`)
+        })
+
+})
+
+app.get('/enableCharging', (req, res) => {
+    med.methods.enableCharging(String(req.query.prov), String(req.query.sub)).send({ from: accounts[0], gas: 5000000 }).then(() => {
+        res.send(`Provider ${String(req.query.prov)} CAN pull deposits of Subscriber ${String(req.query.sub)} through Mediator ${medAddress}`)
+    }, () => {
+        res.send(`Request to Blockchain failed.`)
+    })
+})
+
+app.get('/disableCharging', (req, res) => {
+    med.methods.disableCharging(String(req.query.prov), String(req.query.sub)).send({ from: accounts[0], gas: 5000000 }).then(() => {
+        res.send(`Provider ${String(req.query.prov)} CANNOT pull deposits of Subscriber ${String(req.query.sub)} through Mediator ${medAddress}`)
+    }, () => {
+        res.send(`Request to Blockchain failed.`)
     })
 })
 
 app.get('/pullSub', (req, res) => {
-    med.methods.medPullFromSub(String(req.query.prov), String(req.query.sub), parseInt(req.query.amount)).send({ from: accounts[0], gas:5000000}).then(() => {
-        res.send(`Pulled tokens. Check balances.`)
+    med.methods.medPullFromSub(String(req.query.prov), String(req.query.sub), parseInt(req.query.amount)).send({ from: accounts[0], gas: 5000000 }).then(() => {
+        res.send(`Mediator pulled from Sub. Check balances.`)
+    }, () => {
+        res.send(`Request to Blockchain failed.`)
+    })
+})
+
+app.get('/pullMed', (req, res) => {
+    prov.methods.pull(String(req.query.med), String(req.query.sub), parseInt(req.query.amount)).send({ from: accounts[0], gas: 5000000 }).then(() => {
+        res.send(`Provider pulled from Med. Check balances.`)
+    }, () => {
+        res.send(`Request to Blockchain failed.`)
     })
 })
 
 app.listen(3000, () => {
     console.log("Server listening on port 3000.")
+
+    getNet()
+    //getContracts()
+    paymentsMapping = new Map();
+    console.log(`Environment is up. Web3 is ${web3}`)
 })

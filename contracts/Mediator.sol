@@ -53,7 +53,7 @@ contract Mediator {
     ) public {
         require(
             provs[_prov].subs[_sub].exists != true,
-            "This specific subscriber-provider relationship is already esttablished."
+            "This specific subscriber-provider relationship is already established."
         );
         provs[_prov].subs[_sub].exists = true;
         provs[_prov].subs[_sub].readyToPull = false;
