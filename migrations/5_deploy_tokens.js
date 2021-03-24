@@ -2,7 +2,6 @@ const ERC20 = artifacts.require("DDToken");
 const Subscriber = artifacts.require("Subscriber")
 const Mediator = artifacts.require("Mediator")
 const Provider = artifacts.require("Provider")
-const dotenv = require('dotenv'); dotenv.config();
 
 module.exports = async function (deployer, network, accounts) {
   await deployer.deploy(ERC20, 1000000, { from: accounts[0] })
@@ -16,11 +15,6 @@ module.exports = async function (deployer, network, accounts) {
   console.log("prov:" + prov.address);
   console.log("med:" + med.address);
   console.log("sub:" + sub.address);
-
-  process.env.TOK = tok.address;
-  process.env.PROV = prov.address;
-  process.env.MED = med.address;
-  process.env.SUB = sub.address;
 
   for (i in accounts) {
     await tok.transfer(accounts[i], 2000)
