@@ -2,6 +2,7 @@ const Web3 = require('web3')
 const cron = require('node-cron')
 const express = require('express')
 const fs = require('fs')
+const dotenv = require('dotenv').config()
 
 app = express()
 /* 
@@ -106,13 +107,13 @@ function periodicPayment(s, m, p, t, l, periodicity, num) {
             time = `*/${10} * * * * *`
     }
     var task = cron.schedule(time, async () => {
-        console.log("Generting automated payment.")
+        console.log("Generating automated payment.")
         var temp1 = await getTok(t).methods.balanceOf(s).call()
         var temp2 = await getTok(t).methods.balanceOf(m).call()
         console.log(`${temp1} -- ${temp2}`)
         var charger = getMed(m)
         console.log('Starting transfer.')
-        charger.methods.medPullFromSub(p, s, l).send({ from: accounts[0], gas: 5000000 }).then(() => {
+        charger.methods.medPullFromSub(p, s, 1).send({ from: accounts[0], gas: 5000000 }).then(() => {
             console.log(`Balances are ${temp1} and ${temp2}.`)
         }, () => {
             console.log(`Something went wrong.`)
@@ -170,8 +171,10 @@ app.get('/seePayments', (req, res) => {
 
 app.get('/balance', (req, res) => {
     try {
-        tok.methods.balanceOf(String(req.query.acc)).call().then(bal => {
-            res.send(`<h1>Balance of the account is ${bal}</h1>`)
+        getTok(req.query.tok).methods.balanceOf(String(req.query.acc)).call().then(bal => {
+            res.send(`Balance of the account is ${bal}`)
+        }, () => {
+            console.log(`Request to Blockchain failed.`)
         })
     }
     catch (e) {
@@ -194,21 +197,22 @@ app.get('/subscribe', (req, res) => {
 })
 
 app.get('/enableCharging', (req, res) => {
-    med.methods.enableCharging(String(req.query.prov), String(req.query.sub)).send({ from: accounts[0], gas: 5000000 }).then(() => {
-        res.send(`Provider ${String(req.query.prov)} CAN pull deposits of Subscriber ${String(req.query.sub)} through Mediator ${medAddress}`)
+    getMed(req.query.med).methods.enableCharging(String(req.query.prov), String(req.query.sub)).send({ from: accounts[0], gas: 5000000 }).then(() => {
+        res.send(`Provider ${String(req.query.prov)} CAN pull deposits of Subscriber ${String(req.query.sub)} through Mediator ${req.query.med}`)
     }, () => {
         res.send(`Request to Blockchain failed.`)
     })
 })
 
 app.get('/disableCharging', (req, res) => {
-    med.methods.disableCharging(String(req.query.prov), String(req.query.sub)).send({ from: accounts[0], gas: 5000000 }).then(() => {
-        res.send(`Provider ${String(req.query.prov)} CANNOT pull deposits of Subscriber ${String(req.query.sub)} through Mediator ${medAddress}`)
+    getMed(req.query.med).methods.disableCharging(String(req.query.prov), String(req.query.sub)).send({ from: accounts[0], gas: 5000000 }).then(() => {
+        res.send(`Provider ${String(req.query.prov)} CANNOT pull deposits of Subscriber ${String(req.query.sub)} through Mediator ${req.query.med}`)
     }, () => {
         res.send(`Request to Blockchain failed.`)
     })
 })
 
+/* NON-AUTOMATED PULLING FROM SUBSCRIBER. UNNECESSARY IF SUBSCRIPTION SET, SINCE IT CREATES AN AUTOMATED TASK WITH THE SAME EFFECT */
 app.get('/pullSub', (req, res) => {
     med.methods.medPullFromSub(String(req.query.prov), String(req.query.sub), parseInt(req.query.amount)).send({ from: accounts[0], gas: 5000000 }).then(() => {
         res.send(`Mediator pulled from Sub. Check balances.`)
@@ -218,7 +222,7 @@ app.get('/pullSub', (req, res) => {
 })
 
 app.get('/pullMed', (req, res) => {
-    prov.methods.pull(String(req.query.med), String(req.query.sub), parseInt(req.query.amount)).send({ from: accounts[0], gas: 5000000 }).then(() => {
+    getProv(req.query.prov).methods.pull(String(req.query.med), String(req.query.sub), parseInt(req.query.amount)).send({ from: accounts[0], gas: 5000000 }).then(() => {
         res.send(`Provider pulled from Med. Check balances.`)
     }, () => {
         res.send(`Request to Blockchain failed.`)
