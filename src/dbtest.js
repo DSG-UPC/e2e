@@ -8,6 +8,11 @@ app.post('/addSub', (req, res) => {
     res.send()
 })
 
+app.delete('/delSub', (req, res) => {
+    db.delSub(String(req.query.sub), String(req.query.med), String(req.query.prov))
+    res.send()
+})
+
 app.listen(3000, () => {
     if(db.init()) {console.log(`Database initialization failed.`)}
 })

@@ -23,17 +23,29 @@ module.exports = {
             }
         })
     },
+
     addSub: (sub, med, prov, lim) => {
         pool.query(`\
             insert into subscriptions (sub, med, prov, lim) values (\
             '${sub}', '${med}', '${prov}', ${lim});`, (err, res) => {
             if (err) {
                 console.log(err)
-                return
             }
             else {
                 console.log(`Row inserted succesfully.`)
-                return
+            }
+        })
+    },
+
+    delSub: (sub, med, prov) => {
+        pool.query(`\
+            delete from subscriptions where (\
+            sub = '${sub}' and med = '${med}' and prov = '${prov}');`, (err, res) => {
+            if (err) {
+                console.log(err)
+            }
+            else {
+                console.log(`Row deleted succesfully.`)
             }
         })
     }
