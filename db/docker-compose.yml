@@ -1,0 +1,31 @@
+version: '3'
+services:
+  db:
+    image: "postgres"
+    environment:
+      - POSTGRES_USER=ereuse
+      - POSTGRES_PASSWORD=ereuse
+      - POSTGRES_DB=ereuse
+      - PGDATA=/var/lib/postgresql/data/
+    volumes:
+      - db-data:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432" 
+
+  pgadmin:
+    image: "dpage/pgadmin4"
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@ereuse.com
+      PGADMIN_DEFAULT_PASSWORD: ereuse
+      PGADMIN_LISTEN_PORT: 80
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    ports:
+      - "8080:80"
+    links:
+    - "db:pgsql-server"
+  
+volumes:
+  db-data: # named volumes can be managed easier using docker-compose
+  pgadmin-data:
