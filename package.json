@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "node_modules/.bin/truffle test",
-    "server": "node ./src/index.js"
+    "server": "nodemon ./src/dbtest.js"
   },
   "author": "",
   "license": "ISC",
@@ -15,6 +15,7 @@
     "ganache-cli": "^6.12.2",
     "mocha": "^8.3.1",
     "node-cron": "^3.0.0",
+    "nodemon": "^2.0.7",
     "pg": "^8.5.1",
     "solc": "^0.8.2",
     "truffle": "^5.2.3",

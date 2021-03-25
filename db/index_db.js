@@ -8,6 +8,8 @@ const pool = new Pool({
 })
 
 module.exports = {
+    ret: {},
+
     init: () => {
         pool.query(`\
             create table if not exists subscriptions (\
@@ -15,11 +17,9 @@ module.exports = {
             primary key (sub, med, prov));`, (err, res) => {
             if (err) {
                 console.log(err)
-                return false
             }
             else {
                 console.log(`Database initialized succesfully.`)
-                return false
             }
         })
     },
@@ -48,5 +48,54 @@ module.exports = {
                 console.log(`Row deleted succesfully.`)
             }
         })
+    },
+
+    subAgmt: (sub) => {
+        pool.query(`\
+            select * from subscriptions where sub ilike \'%${sub}%\';`, (err, res) => {
+            if (err) {
+                console.log(err)
+            }
+            else {
+                console.log(res.rows)
+            }
+        })
+    },
+
+    medAgmt: (med) => {
+        pool.query(`\
+            select * from subscriptions where med ilike \'%${med}%\';`, (err, res) => {
+            if (err) {
+                console.log(err)
+            }
+            else {
+                console.log(res.rows)
+            }
+        })
+    },
+
+    provAgmt: (prov) => {
+        pool.query(`\
+            select * from subscriptions where prov ilike \'%${prov}%\';`, (err, res) => {
+            if (err) {
+                console.log(err)
+                return res.rows
+            }
+            else {
+                console.log(res.rows)
+                return res.rows
+            }
+        })
+    },
+
+    subLim: async (sub, med, prov) => {
+        pool.query(`\
+            select lim from subscriptions where \
+            sub = '${sub}' and med = '${med}' and prov = '${prov}';`)
+            .then(res => {
+                console.log(res.rows[0].lim)
+                return res.rows[0].lim
+            })
+            .catch(err => console.error(err.stack))
     }
 }
