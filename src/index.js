@@ -75,7 +75,6 @@ function getTok(at) {
     return new web3.eth.Contract(require('../build/contracts/DDToken.json').abi, at)
 }
 
-
 function schedulePayment(sender, receiver, amount, secs) {
     var task = cron.schedule(`*/${secs} * * * * *`, async () => {
         console.log("Starting task.")

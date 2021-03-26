@@ -12,7 +12,12 @@ const pool = new Pool({
 })
 var accounts;
 var web3;
-var payments
+var tok;
+var payments;
+
+function getTok(at) {
+    return new web3.eth.Contract(require('../build/contracts/DDToken.json').abi, at)
+}
 
 app = express()
 
@@ -44,7 +49,7 @@ app.post('/addSubscription', (req, res) => {
     pool.query(`\
         insert into subscriptions (sub, med, prov, lim, charge, unit, num, fwd, active) values (\
         '${req.query.sub}', '${req.query.med}', '${req.query.prov}', ${req.query.lim},\
-        ${req.query.charge}, '${req.query.unit}', '${req.query.num}', false, false);`, (err, result) => {
+        ${req.query.charge}, '${req.query.unit}', '${req.query.num}', 'false', false);`, (err, result) => {
         if (err) { res.send(err) }
         else { res.send(`Row inserted succesfully.`) }
     })
@@ -84,6 +89,10 @@ app.post('/startSubscription', (req, res) => {
             }
         })
     }
+})
+
+app.post('/asyncTransfer', (req, res) => {
+
 })
 
 app.delete('/stopSubscription', (req, res) => {
@@ -162,7 +171,7 @@ app.listen(3000, async () => {
         primary key (prov));
         
         create table if not exists subscriptions
-        (sub varchar not null, med varchar not null, prov varchar not null, lim integer not null, charge integer not null, unit varchar not null, num varchar not null, fwd boolean not null,
+        (sub varchar not null, med varchar not null, prov varchar not null, lim integer not null, charge integer not null, unit varchar not null, num varchar not null, fwd boolean not null, active boolean not null,
         primary key (sub, med, prov),
         foreign key (sub) references subs (sub),
         foreign key (med) references meds (med),
@@ -176,7 +185,18 @@ app.listen(3000, async () => {
             /* subway term school fee crop merit confirm buffalo lobster march deliver decorate */
             web3 = new Web3('http://localhost:8545');
             accounts = await web3.eth.getAccounts();
+            tok = getTok('0xD3cC80351C173d4fEd078Fc68D206f12D0449563')
             
+            
+            pool.query(`\
+            insert into subs (sub) values ('${accounts[1]}'), ('${accounts[2]}'), \
+            ('${accounts[3]}'), ('${accounts[4]}');\
+            insert into meds (med) values ('${accounts[0]}');\
+            insert into provs (prov) values ('${accounts[5]}'), ('${accounts[6]}'), \
+            ('${accounts[7]}'), ('${accounts[8]}');`, (err, result) => {
+                if (err) {console.log(`${err}\nAccounts not added.`)}
+                else {console.log(`Accounts added to the database.`)}
+            })
         }
     })
 })
