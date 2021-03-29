@@ -12,12 +12,12 @@ const pool = new Pool({
 })
 var accounts;
 var web3;
-var tok;
+//var tok;
 var payments;
 
-function getTok(at) {
+/* function getTok(at) {
     return new web3.eth.Contract(require('../build/contracts/DDToken.json').abi, at)
-}
+} */
 
 app = express()
 
@@ -65,30 +65,47 @@ app.post('/addSubscription', (req, res) => {
 */
 })
 
-app.post('/startSubscription', (req, res) => {
-    if (payments.has(`${req.query.sub}-to-${req.query.med}-to-${req.query.prov}`)) {
-        res.send(`This subscription is already active.`)
-    }
-    else {
-        pool.query(`update subscriptions set active = true where \
-        sub = '${req.query.sub}' and med = '${req.query.med}' and prov = '${req.query.prov}';`, (err, result) => {
-            if (err) res.send(err)
-            else {
-                var task0 = cron.schedule(`0,30 * * * * *`, async () => {
-                    console.log(`Prov sets amount + Return previous amount.`)
-                }, { scheduled: true })
-                var task1 = cron.schedule(`10,40 * * * * *`, async () => {
-                    console.log(`Med pulls money from Sub.`)
-                }, { scheduled: true })
-                var task2 = cron.schedule(`20,50 * * * * *`, async () => {
-                    console.log(`Final pull enabled.`)
-                }, { scheduled: true })
-                var tasks = [task0, task1, task2]
-                payments.set(`${req.query.sub}-to-${req.query.med}-to-${req.query.prov}`, tasks)
-                res.send(`Subscription active. ID is ${req.query.sub}-to-${req.query.med}-to-${req.query.prov}.`)
+app.post('/startSubscription', async (req, res) => {
+    /* CHANGE: CHECK IF IT EXISTS IN THE DB */
+    pool.query(`
+    select * from subscriptions where
+    sub = '${req.query.sub}' and med = '${req.query.med}' and prov = '${req.query.prov}'`, (err, result) => {
+        if (err) { console.log(err) }
+        else {
+            console.log(result.rows)
+            if (result.rows.length == 0) {
+                res.send(`Subscription does not exist.`)
             }
-        })
-    }
+            else if (result.rows.active == 'true') {
+                res.send(`Subscription exists, and it is already active.`)
+            }
+            else {
+                if (payments.has(`${req.query.sub}-to-${req.query.med}-to-${req.query.prov}`)) {
+                    res.send(`This subscription is already active.`)
+                }
+                else {
+                    pool.query(`update subscriptions set active = true where \
+                    sub = '${req.query.sub}' and med = '${req.query.med}' and prov = '${req.query.prov}';`, (err, result) => {
+                        if (err) res.send(err)
+                        else {
+                            var task0 = cron.schedule(`0,30 * * * * *`, async () => {
+                                console.log(`${req.query.prov} sets amount + Return previous amount to ${req.query.sub}.`)
+                            }, { scheduled: true })
+                            var task1 = cron.schedule(`10,40 * * * * *`, async () => {
+                                console.log(`${req.query.med} pulls money from ${req.query.sub}.`)
+                            }, { scheduled: true })
+                            var task2 = cron.schedule(`20,50 * * * * *`, async () => {
+                                console.log(`Final pull enabled. ${req.query.prov} can pull from ${req.query.med} the funds of ${req.query.sub}.`)
+                            }, { scheduled: true })
+                            var tasks = [task0, task1, task2]
+                            payments.set(`${req.query.sub}-to-${req.query.med}-to-${req.query.prov}`, tasks)
+                            res.send(`Subscription active. ID is ${req.query.sub}-to-${req.query.med}-to-${req.query.prov}.`)
+                        }
+                    })
+                }
+            }
+        }
+    })
 })
 
 app.post('/asyncTransfer', (req, res) => {
@@ -96,21 +113,37 @@ app.post('/asyncTransfer', (req, res) => {
 })
 
 app.delete('/stopSubscription', (req, res) => {
-    if (!payments.has(`${req.query.sub}-to-${req.query.med}-to-${req.query.prov}`)) {
-        res.send(`This subscription does not exist.`)
-    } else {
-        pool.query(`update subscriptions set active = false where \
-        sub = '${req.query.sub}' and med = '${req.query.med}' and prov = '${req.query.prov}';`, (err, result) => {
-            if (err) { res.send(err) }
-            else {
-                payments.get(`${req.query.sub}-to-${req.query.med}-to-${req.query.prov}`).map(task => {
-                    task.stop()
-                })
-                payments.delete(`${req.query.sub}-to-${req.query.med}-to-${req.query.prov}`)
-                res.send(`Payment stopped. Subscription is now inactive.`)
+    pool.query(`\
+    select * from subscriptions where
+    sub = '${req.query.sub}' and med = '${req.query.med}' and prov = '${req.query.prov}';`, (err, result) => {
+        if (err) console.log(err)
+        else {
+            console.log(result.rows)
+            if (result.rows.length == 0) {
+                res.send(`Subscription does not exist.`)
             }
-        })
-    }
+            else if (result.rows.active == 'false') {
+                res.send(`Subscription exists, and it is already stopped.`)
+            }
+            else {
+                if (!payments.has(`${req.query.sub}-to-${req.query.med}-to-${req.query.prov}`)) {
+                    res.send(`This subscription is not active.`)
+                } else {
+                    pool.query(`update subscriptions set active = false where \
+                    sub = '${req.query.sub}' and med = '${req.query.med}' and prov = '${req.query.prov}';`, (err, result) => {
+                        if (err) { res.send(err) }
+                        else {
+                            payments.get(`${req.query.sub}-to-${req.query.med}-to-${req.query.prov}`).map(task => {
+                                task.stop()
+                            })
+                            payments.delete(`${req.query.sub}-to-${req.query.med}-to-${req.query.prov}`)
+                            res.send(`Payment stopped. Subscription is now inactive.`)
+                        }
+                    })
+                }
+            }
+        }
+    })
 })
 
 app.delete('/delSubscription', (req, res) => {
@@ -118,7 +151,19 @@ app.delete('/delSubscription', (req, res) => {
         delete from subscriptions where (\
         sub = '${req.query.sub}' and med = '${req.query.med}' and prov = '${req.query.prov}');`, (err, result) => {
         if (err) { res.send(err) }
-        else { res.send(`Row deleted succesfully.`) }
+        else {
+            var temp = payments.get(`${req.query.sub}-to-${req.query.med}-to-${req.query.prov}`)
+            if(temp !== undefined){
+                temp.map(task => {
+                    task.stop()
+                })
+                payments.delete(`${req.query.sub}-to-${req.query.med}-to-${req.query.prov}`)
+                res.send(`Payment stopped. Subscription is now inactive and deleted.`)
+            }
+            else{
+                res.send(`Subscription deleted.`)
+            }
+        }
     })
 })
 
@@ -185,17 +230,34 @@ app.listen(3000, async () => {
             /* subway term school fee crop merit confirm buffalo lobster march deliver decorate */
             web3 = new Web3('http://localhost:8545');
             accounts = await web3.eth.getAccounts();
-            tok = getTok('0xD3cC80351C173d4fEd078Fc68D206f12D0449563')
-            
-            
+            //tok = getTok('0xD3cC80351C173d4fEd078Fc68D206f12D0449563')
+
             pool.query(`\
             insert into subs (sub) values ('${accounts[1]}'), ('${accounts[2]}'), \
             ('${accounts[3]}'), ('${accounts[4]}');\
             insert into meds (med) values ('${accounts[0]}');\
             insert into provs (prov) values ('${accounts[5]}'), ('${accounts[6]}'), \
             ('${accounts[7]}'), ('${accounts[8]}');`, (err, result) => {
-                if (err) {console.log(`${err}\nAccounts not added.`)}
-                else {console.log(`Accounts added to the database.`)}
+                if (err) { console.log(`${err}\nAccounts not added.`) }
+                else { console.log(`Accounts added to the database.`) }
+
+                pool.query(`\
+                select * from subscriptions where active = true`, (err, result) => {
+                    result.rows.map(row => {
+                        console.log(`Active subscription from ${row.sub} to ${row.prov} found on database.`)
+                        var task0 = cron.schedule(`0,30 * * * * *`, async () => {
+                            console.log(`${row.prov} sets amount + Return previous amount to ${row.sub}.`)
+                        }, { scheduled: true })
+                        var task1 = cron.schedule(`10,40 * * * * *`, async () => {
+                            console.log(`${row.med} pulls money from ${row.sub}.`)
+                        }, { scheduled: true })
+                        var task2 = cron.schedule(`20,50 * * * * *`, async () => {
+                            console.log(`Final pull enabled. ${row.prov} can pull from ${row.med} the funds of ${row.sub}.`)
+                        }, { scheduled: true })
+                        var tasks = [task0, task1, task2]
+                        payments.set(`${row.sub}-to-${row.med}-to-${row.prov}`, tasks)
+                    })
+                })
             })
         }
     })
