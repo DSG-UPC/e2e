@@ -3,14 +3,8 @@ pragma solidity >=0.6.0 <0.9.0;
 import "./DDToken.sol";
 
 contract Mediator {
-    struct agreement {
-        bool exists;
-        address prov;
-        uint deposit;
-    }
-
     address public owner;
-    mapping(address => agreements) subReg;
+    mapping(address => mapping(address => uint256)) deposits;
     DDToken public tok;
 
     constructor() public {
@@ -20,57 +14,38 @@ contract Mediator {
     receive() external payable {}
 
     modifier onlyOwner() {
-        require(msg.sender == owner);
+        require(msg.sender == owner, "Mediator: Only the owner account can perform this action.");
         _;
     }
 
-    function setToken(address _tokAddress) public onlyOwner{
+    function setToken(address _tokAddress) public onlyOwner {
         tok = DDToken(_tokAddress);
     }
 
-    function register(
-        address _prov,
-        address _sub
-    ) public onlyOwner{
-        require(
-            subReg[_sub].exists != true,
-            "This specific subscriber-provider relationship is already established."
-        );
-        subReg[_sub].exists = true;
+    function depositPull(address _sub, address _prov, uint256 _amount) public onlyOwner {
+        deposits[_sub][_prov] += _amount;
+
+        tok.transferFrom(_sub, address(this), _amount);
+    }
+    
+    function depositPush(address _prov, uint256 _amount) public {
+        deposits[msg.sender][_prov] += _amount;
+
+        tok.transferFrom(msg.sender, address(this), _amount);
     }
 
-    function medPullFromSub(
-        address _prov,
-        address payable _sub,
-        uint _amount
-    ) public {
-        Subscriber auxSub = Subscriber(_sub);
+    function refund(address _sub, address _prov) public onlyOwner {
+        uint256 _temp = deposits[_sub][_prov];
+        deposits[_sub][_prov] = 0;
 
-        provs[_prov].subs[_sub].availableTokens += _amount;
-
-        auxSub.directDebit(_prov, _amount);
+        tok.transfer(_sub, _temp);
     }
 
-    function subPullFromMed(address _prov) public {
-        require(
-            provs[_prov].subs[msg.sender].readyToPull == false,
-            "The deposited amount is already available for the Provider to withdraw. Subscriber can't get tokens back at this stage."
-        );
-        require(
-            provs[_prov].subs[msg.sender].exists == true,
-            "The Subscriber-Provider agreement does not exist"
-        );
+    function payProv(address _sub, address _prov) public onlyOwner {
+        uint256 _temp = deposits[_sub][_prov];
+        deposits[_sub][_prov] = 0;
 
-        uint temp = provs[_prov].subs[msg.sender].availableTokens;
-        provs[_prov].subs[msg.sender].availableTokens = 0;
-
-        tok.transfer(msg.sender, temp);
+        tok.transfer(_prov, _temp);
     }
-
-    function retToSub(address _sub, address _prov) public {
-        uint temp = provs[_prov].subs[_sub].availableTokens;
-        provs[_prov].subs[_sub].availableTokens = 0;
-
-        tok.transfer(_sub, temp);
-    }
+    
 }
