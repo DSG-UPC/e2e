@@ -1,7 +1,7 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import React, { Component } from 'react'
 import Web3 from 'web3'
-import { Navbar, Jumbotron, Container, ListGroup } from 'react-bootstrap'
+import { Navbar, Jumbotron, Container, ListGroup, Row, Col } from 'react-bootstrap'
 import DDToken from './contracts/DDToken.json'
 import Mediator from './contracts/Mediator.json'
 
@@ -25,11 +25,24 @@ class App extends Component {
       else {
         window.alert('Please install Metamask')
       }
-      try{
-        /* const token = Token.networks['5777'].address
-        const dbankAddress = dBank.networks['5777'].address */
+      try {
+        const tokAt = DDToken.networks[net].address
+        const medAt = Mediator.networks[net].address
+
+        const tok = new web3.eth.Contract(DDToken.abi, tokAt)
+        const med = new web3.eth.Contract(Mediator.abi, medAt)
+
+        const allowance = await tok.methods.allowance(this.state.account, medAt).call()
+
+        this.setState({
+          tokAt: tokAt,
+          tok: tok,
+          medAt: medAt,
+          med: med,
+          allowance: allowance,
+        })
       }
-      catch(e){
+      catch (e) {
         console.log(e)
         window.alert(`Could not fetch deployed contracts.`)
       }
@@ -50,6 +63,7 @@ class App extends Component {
       tok: null,
       medAt: '',
       med: null,
+      allowance: 0,
     }
   }
 
@@ -69,6 +83,29 @@ class App extends Component {
             </ListGroup>
           </Container>
         </Jumbotron>
+        <Container fluid>
+          <Row>
+            <Col>
+              1 of 2
+            </Col>
+            <Col>
+              <Row>
+                <Col>
+                  <p>Current allowance:</p>
+                </Col>
+              </Row>
+              <Row>
+                <Col>
+                <Jumbotron fluid >
+                <Container>
+                  <h1>{this.state.allowance} DDTokens</h1>
+                </Container>
+              </Jumbotron>
+                </Col>
+              </Row>
+            </Col>
+          </Row>
+        </Container>
       </div>
     )
   }
