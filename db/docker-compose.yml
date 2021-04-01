@@ -22,7 +22,7 @@ services:
     volumes:
       - pgadmin-data:/var/lib/pgadmin
     ports:
-      - "8080:80"
+      - "5433:80"
     links:
     - "db:pgsql-server"
   

@@ -72,7 +72,7 @@ async function main() {
     const nanos = hrend[0] * 1e9 + hrend[1]
     const millis = nanos / 1e6
     console.info(`Benchmark took ${nanos}ns - ${millis}ms`)
-    console.log(os.cpus())
+    //console.log(os.cpus())
 
 
     await tok.methods.transfer('0xcc02Dd85757abf893184d37E67A3Bc996682e655', 50).send({ from: accounts[0] })
