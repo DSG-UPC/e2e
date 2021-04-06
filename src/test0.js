@@ -136,7 +136,7 @@ async function test0() {
     for (i=1; i<5; ++i){
         result = await pool.query(`select charge from subscriptions where sub = '${accounts[i]}' and med = '${medAt}' and prov = '${accounts[i+4]}'`)
         await med.methods.depositPull(accounts[i], accounts[i+4], parseInt(result.rows[0].charge)).send({ from: accounts[0] }) 
-        console.log(`           ${accounts[i]} now has ${await tok.methods.balanceOf(accounts[i]).call({ from: accounts[0] })} tokens.`)
+        console.log(`           Subscriptor ${accounts[i]} now has ${await tok.methods.balanceOf(accounts[i]).call({ from: accounts[0] })} tokens.`)
     }
    /*  for (i=1; i<5; ++i){
         result = await pool.query(`select charge from subscriptions where sub = '${accounts[i]}' and med = '${medAt}' and prov = '${accounts[i+4]}'`)
@@ -145,6 +145,48 @@ async function test0() {
     } */
     console.log(`Mediator has ${await tok.methods.balanceOf(medAt).call({ from: accounts[0] })} tokens from subscriptors.`)
 
-    await pool.end()
+    /* Step 6: Before the providers can get the money of the deposits, the Mediator has to allow it by setting the flag in the DB to the appropriate value. */
+    await pool.query(`\
+    update subscriptions set fwd = true where\
+    sub = '${accounts[1]}' and med = '${medAt}' and prov = '${accounts[5]}';
+
+    update subscriptions set fwd = true where\
+    sub = '${accounts[2]}' and med = '${medAt}' and prov = '${accounts[6]}';
+
+    update subscriptions set fwd = true where\
+    sub = '${accounts[3]}' and med = '${medAt}' and prov = '${accounts[7]}';
+
+    update subscriptions set fwd = true where\
+    sub = '${accounts[4]}' and med = '${medAt}' and prov = '${accounts[8]}';    
+    `)
+    console.log(`Mediator has allowed the Providers to claim their deposits.`)
+
+    /* Step 7: The last step is that providers actually get their funds. For this, they will ask the organization, and it will interact with the Mediator contract, that will send the currently stored deposits to their respective Providers.
+    
+    Alternatively, at this point the Mediator can refund the Subscriber, in case the Provider does not claim the funds.
+    
+    In any case, the database will reflect that the subscriptions need to get the next charge defined, and that the flag to allow fund forwarding to Providers reset. In production, an off-chain automated task system will trigger events at due time.*/
+    result = await pool.query(`select sub, prov from subscriptions where fwd = 'true'`)
+    result.rows.map(async row => {
+        await med.methods.payProv(row.sub, row.prov).send({ from: accounts[0] })
+        await pool.query(`update subscriptions set charge = 0, fwd = 'false' where\
+        sub = '${row.sub}' and med = '${medAt}' and prov = '${row.prov}';`)
+        console.log(`Moved the deposit of Subscriber ${row.sub} to the Provider ${row.prov}`)
+        console.log(`Subscriber ${row.sub} now has ${await tok.methods.balanceOf(row.sub).call({ from: accounts[0] })} tokens`)
+        console.log(`Provider ${row.prov} now has ${await tok.methods.balanceOf(row.prov).call({ from: accounts[0] })} tokens`)
+    })
+    /* result.rows.map(async row => {
+        await med.methods.refund(row.sub, row.prov).send({ from: accounts[0] })
+        await pool.query(`update subscriptions set charge = 0, fwd = 'false' where\
+        sub = '${row.sub}' and med = '${medAt}' and prov = '${row.prov}';`)
+        console.log(`Refunded the deposit of Subscriber ${row.sub} to the Provider ${row.prov}. Subscriber recovered its tokens.`)
+        console.log(`Subscriber ${row.sub} now has ${await tok.methods.balanceOf(row.sub).call({ from: accounts[0] })} tokens.`)
+        console.log(`Provider ${row.prov} now has ${await tok.methods.balanceOf(row.prov).call({ from: accounts[0] })} tokens.`)
+    }) */
+
+
+
+    //await pool.end()
 }
+
 test0()
