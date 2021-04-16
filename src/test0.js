@@ -15,8 +15,12 @@ async function test0() {
         password: "ereuse"
     })
 
-    web3 = new Web3('http://localhost:8545');
+    /* ADAPT TO PROVIDER: LOCAL VS TESTBED */
+    web3 = new Web3('http://45.150.187.30:8545');
     accounts = await web3.eth.getAccounts();
+    for(i = 2; i < 9; ++i){
+        await web3.eth.personal.unlockAccount(accounts[i], "upcPoA2")
+    }
     net = await web3.eth.net.getId()
     chain = await web3.eth.getChainId()
 
@@ -32,11 +36,11 @@ async function test0() {
     console.log(`Token is deployed at ${tokAt}.`)
     console.log(`Mediator is deployed at ${medAt}. Its owner is ${await med.methods.owner().call({ from: accounts[0] })}`)
     console.log(`List of subscribers:`)
-    for (i = 1; i < 5; ++i) {
+    for (i = 2; i < 6; ++i) {
         console.log(`           ${accounts[i]}  ${await tok.methods.balanceOf(accounts[i]).call({ from: accounts[0] })} tokens`)
     }
     console.log(`List of providers:`)
-    for (i = 5; i < 9; ++i) {
+    for (i = 6; i < 10; ++i) {
         console.log(`           ${accounts[i]}  ${await tok.methods.balanceOf(accounts[i]).call({ from: accounts[0] })} tokens`)
     }
     console.log(`TEST 0: IDEAL SCENARIO`)
@@ -70,38 +74,35 @@ async function test0() {
     )
     console.log(`Tables created. Inserting test rows...`)
     await pool.query(`\
-                    insert into subs (sub) values ('${accounts[1]}'), ('${accounts[2]}'), \
-                    ('${accounts[3]}'), ('${accounts[4]}');\
+                    insert into subs (sub) values ('${accounts[2]}'), ('${accounts[3]}'), \
+                    ('${accounts[4]}'), ('${accounts[5]}');\
                     insert into meds (med) values ('${medAt}');\
-                    insert into provs (prov) values ('${accounts[5]}'), ('${accounts[6]}'), \
-                    ('${accounts[7]}'), ('${accounts[8]}');`)
+                    insert into provs (prov) values ('${accounts[6]}'), ('${accounts[7]}'), \
+                    ('${accounts[8]}'), ('${accounts[9]}');`)
     console.log(`Test rows inserted. Adding relevant subscriptions...`)
 
     /* Step 1: The parts make an off-chain agreement. Afterwards, subscription is added to the system as inactive.*/
     await pool.query(`\
     insert into subscriptions (sub, med, prov, lim, charge, unit, num, fwd, active) values\
-        ('${accounts[1]}', '${medAt}', '${accounts[5]}', 50, 0, 'day', '5', 'false', false),
         ('${accounts[2]}', '${medAt}', '${accounts[6]}', 50, 0, 'day', '5', 'false', false),
         ('${accounts[3]}', '${medAt}', '${accounts[7]}', 50, 0, 'day', '5', 'false', false),
-        ('${accounts[4]}', '${medAt}', '${accounts[8]}', 50, 0, 'day', '5', 'false', false);
+        ('${accounts[4]}', '${medAt}', '${accounts[8]}', 50, 0, 'day', '5', 'false', false),
+        ('${accounts[5]}', '${medAt}', '${accounts[9]}', 50, 0, 'day', '5', 'false', false);
     `)
     console.log(`Subscriptions added. Performing token transfer approvals...`)
     
     /* Step 2: After the subscriptions are present in the system, each subscriber account has to interact with
     the token, and allow the mediator to transfer tokens on its behalf. The limit has been established at 50 tokens
     for no meaningful reason. */
-    await tok.methods.approve(medAt, 50).send({ from: accounts[1] })
     await tok.methods.approve(medAt, 50).send({ from: accounts[2] })
     await tok.methods.approve(medAt, 50).send({ from: accounts[3] })
     await tok.methods.approve(medAt, 50).send({ from: accounts[4] })
+    await tok.methods.approve(medAt, 50).send({ from: accounts[5] })
     console.log(`Token transfer approvals done. Marking subscriptions as active...`)
 
     /* Step 3: Now, the token will let the mediator transfer tokens that belong to the subscribers. Next, the
     subscriptions need to be marked as active in the system. This is important for automation purposes. */
     await pool.query(`\
-    update subscriptions set active = true where\
-    sub = '${accounts[1]}' and med = '${medAt}' and prov = '${accounts[5]}';
-
     update subscriptions set active = true where\
     sub = '${accounts[2]}' and med = '${medAt}' and prov = '${accounts[6]}';
 
@@ -109,7 +110,10 @@ async function test0() {
     sub = '${accounts[3]}' and med = '${medAt}' and prov = '${accounts[7]}';
 
     update subscriptions set active = true where\
-    sub = '${accounts[4]}' and med = '${medAt}' and prov = '${accounts[8]}';    
+    sub = '${accounts[4]}' and med = '${medAt}' and prov = '${accounts[8]}';
+
+    update subscriptions set active = true where\
+    sub = '${accounts[5]}' and med = '${medAt}' and prov = '${accounts[9]}';    
     `)
     console.log(`Subscriptions marked as active. Token transfers can begin.`)
 
@@ -117,23 +121,23 @@ async function test0() {
     next payment. The provider has to specify the amount to charge to each subscriptor before the mediator can claim the deposit. */
     await pool.query(`\
     update subscriptions set charge = 5 where\
-    sub = '${accounts[1]}' and med = '${medAt}' and prov = '${accounts[5]}';
-
-    update subscriptions set charge = 10 where\
     sub = '${accounts[2]}' and med = '${medAt}' and prov = '${accounts[6]}';
 
-    update subscriptions set charge = 15 where\
+    update subscriptions set charge = 10 where\
     sub = '${accounts[3]}' and med = '${medAt}' and prov = '${accounts[7]}';
 
+    update subscriptions set charge = 15 where\
+    sub = '${accounts[4]}' and med = '${medAt}' and prov = '${accounts[8]}';
+
     update subscriptions set charge = 20 where\
-    sub = '${accounts[4]}' and med = '${medAt}' and prov = '${accounts[8]}';    
+    sub = '${accounts[5]}' and med = '${medAt}' and prov = '${accounts[9]}';    
     `)
     console.log(`Providers have set the amount to charge for each subscriptor they are related with.`)
 
     /* Step 5: At this point, the subscribers can manually deposit the required amount in the mediator, or the mediator can pull the funds ou of the subscriber account (hence the previous approval). */
     console.log(`Starting movement of tokens towards the mediator.`)
     var result
-    for (i=1; i<5; ++i){
+    for (i=2; i<6; ++i){
         result = await pool.query(`select charge from subscriptions where sub = '${accounts[i]}' and med = '${medAt}' and prov = '${accounts[i+4]}'`)
         await med.methods.depositPull(accounts[i], accounts[i+4], parseInt(result.rows[0].charge)).send({ from: accounts[0] }) 
         console.log(`           Subscriptor ${accounts[i]} now has ${await tok.methods.balanceOf(accounts[i]).call({ from: accounts[0] })} tokens.`)
@@ -148,16 +152,16 @@ async function test0() {
     /* Step 6: Before the providers can get the money of the deposits, the Mediator has to allow it by setting the flag in the DB to the appropriate value. */
     await pool.query(`\
     update subscriptions set fwd = true where\
-    sub = '${accounts[1]}' and med = '${medAt}' and prov = '${accounts[5]}';
-
-    update subscriptions set fwd = true where\
     sub = '${accounts[2]}' and med = '${medAt}' and prov = '${accounts[6]}';
 
     update subscriptions set fwd = true where\
     sub = '${accounts[3]}' and med = '${medAt}' and prov = '${accounts[7]}';
 
     update subscriptions set fwd = true where\
-    sub = '${accounts[4]}' and med = '${medAt}' and prov = '${accounts[8]}';    
+    sub = '${accounts[4]}' and med = '${medAt}' and prov = '${accounts[8]}';
+
+    update subscriptions set fwd = true where\
+    sub = '${accounts[5]}' and med = '${medAt}' and prov = '${accounts[9]}';    
     `)
     console.log(`Mediator has allowed the Providers to claim their deposits.`)
 
