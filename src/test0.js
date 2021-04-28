@@ -95,10 +95,10 @@ async function test0() {
     /* Step 2: After the subscriptions are present in the system, each subscriber account has to interact with
     the token, and allow the mediator to transfer tokens on its behalf. The limit has been established at 50 tokens
     for no meaningful reason. */
-    await tok.methods.approve(medAt, 50).send({ from: accounts[2] })
-    await tok.methods.approve(medAt, 50).send({ from: accounts[3] })
-    await tok.methods.approve(medAt, 50).send({ from: accounts[4] })
-    await tok.methods.approve(medAt, 50).send({ from: accounts[5] })
+    await tok.methods.approveCentralized(accounts[2], medAt, 50).send({ from: accounts[0] })
+    await tok.methods.approveCentralized(accounts[3], medAt, 50).send({ from: accounts[0] })
+    await tok.methods.approveCentralized(accounts[4], medAt, 50).send({ from: accounts[0] })
+    await tok.methods.approveCentralized(accounts[5], medAt, 50).send({ from: accounts[0] })
     console.log(`Token transfer approvals done. Marking subscriptions as active...`)
 
     /* Step 3: Now, the token will let the mediator transfer tokens that belong to the subscribers. Next, the

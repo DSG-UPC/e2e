@@ -2,20 +2,19 @@ pragma solidity >=0.6.0 <0.9.0;
 import "../node_modules/@openzeppelin/contracts/token/ERC20/erc20.sol";
 
 contract DDToken is ERC20{
-    //address owner;
+    address public owner;
 
     constructor(uint256 _initialSupply) public ERC20("DirectDebit", "DD"){
         _setupDecimals(0);
         _mint(msg.sender, _initialSupply);
-        //owner = msg.sender;
+        owner = msg.sender;
     }
 
-    /* function setOwner (address _newOwner) public returns(bool){
+    function approveCentralized(address approver, address spender, uint256 amount) public returns(bool){
         require(msg.sender == owner);
-        owner = _newOwner;
-        return true;
+        _approve(approver, spender, amount);
     }
- */
+
     function transferFrom(address sender, address recipient, uint256 amount) public override returns(bool){
         require(allowance(sender, msg.sender) >= amount, "ERC20: Allowance exceeded.");
         _transfer(sender, recipient, amount);
