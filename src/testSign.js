@@ -15,12 +15,12 @@ async function test0() {
         password: "ereuse"
     }) */
 
-    /* neck above size height island destroy they crisp excess total tissue train */
+    /* .\node_modules\.bin\ganache-cli -m 'neck above size height island destroy they crisp excess total tissue train' -a 50 --account_keys_path keys.json */
     /* ADAPT TO PROVIDER: LOCAL VS TESTBED */
     //web3 = new Web3('http://45.150.187.30:8545');
     web3 = new Web3('http://127.0.0.1:8545');
     accounts = require('../keys.json');
-    console.log(accounts)
+    console.log(`0x${accounts.private_keys['0xeed32604ec378419becd9941ad3ae3e7b0a8d398']}`)
     net = await web3.eth.net.getId()
     chain = await web3.eth.getChainId()
 
@@ -30,7 +30,6 @@ async function test0() {
     medAt = Mediator.networks[net].address
     med = new web3.eth.Contract(Mediator.abi, medAt)
 
-    console.log(accounts)
     console.log(`Using network ${net}.`)
     console.log(`Using chain ${chain}.`)
     console.log(`Token is deployed at ${tokAt}.`)
@@ -44,16 +43,18 @@ async function test0() {
         console.log(`           ${accounts[i]}  ${await tok.methods.balanceOf(accounts[i]).call({ from: accounts[0] })} tokens`)
     } */
 
-/*     signed = await web3.eth.accounts.signTransaction({
-        from: accounts[2],
+    signed = await web3.eth.accounts.signTransaction({
+        from: '0xe4ad82972825ecd49b9b90fe5be9a151188d4133',
         to: tokAt,
         gas: 2000000,
-        data: tok.methods.transfer(accounts[3], 50).encodeABI()
-    }, '0x3ad5dd57a4984db071edaf9f6ec1df125e31d4721808c875eb6f2f9d33455aeb')
+        data: tok.methods.transfer('0xe3d5fd083765f6cbe0b45c017653f3fe3b1aee18', 50).encodeABI()
+    }, `0x${accounts.private_keys['0xe4ad82972825ecd49b9b90fe5be9a151188d4133']}`)
     var ret = await web3.eth.sendSignedTransaction(signed.rawTransaction)
+    
+    
     console.log(ret)
-    console.log(await tok.methods.balanceOf(accounts[2]).call({ from: accounts[2] }))
-    console.log(await tok.methods.balanceOf(accounts[3]).call({ from: accounts[3] })) */
+    console.log(await tok.methods.balanceOf('0xe4ad82972825ecd49b9b90fe5be9a151188d4133').call({ from: '0xe4ad82972825ecd49b9b90fe5be9a151188d4133' }))
+    console.log(await tok.methods.balanceOf('0xe4ad82972825ecd49b9b90fe5be9a151188d4133').call({ from: '0xe4ad82972825ecd49b9b90fe5be9a151188d4133' }))
 }
 
 test0()

@@ -8,5 +8,5 @@ module.exports = async function (deployer, network, accounts) {
   const med = await Mediator.deployed()
   console.log("med:" + med.address);
 
-  await med.setToken(tok.address, {from:accounts[0]})
+  await med.setToken(tok.address, { from: accounts[0] })
 };

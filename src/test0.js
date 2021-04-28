@@ -16,11 +16,12 @@ async function test0() {
     })
 
     /* ADAPT TO PROVIDER: LOCAL VS TESTBED */
-    web3 = new Web3('http://45.150.187.30:8545');
+    //web3 = new Web3('http://45.150.187.30:8545');
+    web3 = new Web3('http://127.0.0.1:8545')
     accounts = await web3.eth.getAccounts();
-    for(i = 2; i < 9; ++i){
+/*     for(i = 2; i < 9; ++i){
         await web3.eth.personal.unlockAccount(accounts[i], "upcPoA2")
-    }
+    } */
     net = await web3.eth.net.getId()
     chain = await web3.eth.getChainId()
 
@@ -34,7 +35,7 @@ async function test0() {
     console.log(`Using network ${net}.`)
     console.log(`Using chain ${chain}.`)
     console.log(`Token is deployed at ${tokAt}.`)
-    console.log(`Mediator is deployed at ${medAt}. Its owner is ${await med.methods.owner().call({ from: accounts[0] })}`)
+    console.log(`Mediator is deployed at ${medAt}. Its owner is ${await med.methods.owner().call({ from: accounts[0] })}, and its balance is ${await tok.methods.balanceOf(accounts[0]).call({ from: accounts[0] })} tokens`)
     console.log(`List of subscribers:`)
     for (i = 2; i < 6; ++i) {
         console.log(`           ${accounts[i]}  ${await tok.methods.balanceOf(accounts[i]).call({ from: accounts[0] })} tokens`)
