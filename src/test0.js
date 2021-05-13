@@ -19,9 +19,6 @@ async function test0() {
     //web3 = new Web3('http://45.150.187.30:8545');
     web3 = new Web3('http://127.0.0.1:8545')
     accounts = await web3.eth.getAccounts();
-/*     for(i = 2; i < 9; ++i){
-        await web3.eth.personal.unlockAccount(accounts[i], "upcPoA2")
-    } */
     net = await web3.eth.net.getId()
     chain = await web3.eth.getChainId()
 

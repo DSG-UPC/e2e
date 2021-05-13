@@ -18,7 +18,6 @@ var payments;
 /* function getTok(at) {
     return new web3.eth.Contract(require('../build/contracts/DDToken.json').abi, at)
 } */
-
 app = express()
 
 app.post('/regSub', (req, res) => {
@@ -28,7 +27,6 @@ app.post('/regSub', (req, res) => {
         else { res.send(`Row inserted succesfully.`) }
     })
 })
-
 app.post('/regMed', (req, res) => {
     pool.query(`\
         insert into meds (med) values ('${req.query.med}');`, (err, result) => {
@@ -36,7 +34,6 @@ app.post('/regMed', (req, res) => {
         else { res.send(`Row inserted succesfully.`) }
     })
 })
-
 app.post('/regProv', (req, res) => {
     pool.query(`\
         insert into provs (prov) values ('${req.query.prov}');`, (err, result) => {
@@ -44,7 +41,6 @@ app.post('/regProv', (req, res) => {
         else { res.send(`Row inserted succesfully.`) }
     })
 })
-
 app.post('/addSubscription', (req, res) => {
     pool.query(`\
         insert into subscriptions (sub, med, prov, lim, charge, unit, num, fwd, active) values (\
@@ -54,7 +50,8 @@ app.post('/addSubscription', (req, res) => {
         else { res.send(`Row inserted succesfully.`) }
     })
 
-    /*  * * * * * *
+    /*
+    * * * * * *
     | | | | | |
     | | | | | day of week
     | | | | month
@@ -64,7 +61,6 @@ app.post('/addSubscription', (req, res) => {
     second ( optional )
 */
 })
-
 app.post('/startSubscription', async (req, res) => {
     /* CHANGE: CHECK IF IT EXISTS IN THE DB */
     pool.query(`
@@ -107,11 +103,9 @@ app.post('/startSubscription', async (req, res) => {
         }
     })
 })
-
 app.post('/asyncTransfer', (req, res) => {
 
 })
-
 app.delete('/stopSubscription', (req, res) => {
     pool.query(`\
     select * from subscriptions where
@@ -145,7 +139,6 @@ app.delete('/stopSubscription', (req, res) => {
         }
     })
 })
-
 app.delete('/delSubscription', (req, res) => {
     pool.query(`\
         delete from subscriptions where (\
@@ -166,7 +159,6 @@ app.delete('/delSubscription', (req, res) => {
         }
     })
 })
-
 app.get('/subAgmt', (req, res) => {
     pool.query(`\
         select * from subscriptions where sub ilike \'%${req.query.sub}%\';`, (err, result) => {
@@ -174,7 +166,6 @@ app.get('/subAgmt', (req, res) => {
         else { res.send(result.rows) }
     })
 })
-
 app.get('/medAgmt', (req, res) => {
     pool.query(`\
         select * from subscriptions where med ilike \'%${req.query.med}%\';`, (err, result) => {
@@ -182,7 +173,6 @@ app.get('/medAgmt', (req, res) => {
         else { res.send(result.rows) }
     })
 })
-
 app.get('/provAgmt', (req, res) => {
     pool.query(`\
         select * from subscriptions where prov ilike \'%${req.query.prov}%\';`, (err, result) => {
@@ -190,7 +180,6 @@ app.get('/provAgmt', (req, res) => {
         else { res.send(result.rows) }
     })
 })
-
 app.get('/subLim', (req, res) => {
     pool.query(`\
         select lim from subscriptions where \
@@ -199,9 +188,7 @@ app.get('/subLim', (req, res) => {
         else { res.send(result.rows) }
     })
 })
-
 app.listen(3000, async () => {
-    //if(db.init()) {console.log(`Database initialization failed.`)}
     pool.query(
         `create table if not exists subs
         (sub varchar not null,
@@ -221,17 +208,12 @@ app.listen(3000, async () => {
         foreign key (sub) references subs (sub),
         foreign key (med) references meds (med),
         foreign key (prov) references provs (prov));`, async (err, result) => {
-        if (err) {
-            console.log(err)
-        }
+        if (err) {console.log(err)}
         else {
             console.log(`Database initialized succesfully. API is listening on port 3000.`)
             payments = new Map()
-            /* subway term school fee crop merit confirm buffalo lobster march deliver decorate */
             web3 = new Web3('http://localhost:8545');
             accounts = await web3.eth.getAccounts();
-            //tok = getTok('0xD3cC80351C173d4fEd078Fc68D206f12D0449563')
-
             pool.query(`\
             insert into subs (sub) values ('${accounts[1]}'), ('${accounts[2]}'), \
             ('${accounts[3]}'), ('${accounts[4]}');\
@@ -240,7 +222,6 @@ app.listen(3000, async () => {
             ('${accounts[7]}'), ('${accounts[8]}');`, (err, result) => {
                 if (err) { console.log(`${err}\nAccounts not added.`) }
                 else { console.log(`Accounts added to the database.`) }
-
                 pool.query(`\
                 select * from subscriptions where active = true`, (err, result) => {
                     result.rows.map(row => {
