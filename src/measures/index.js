@@ -4,7 +4,7 @@ const DDToken = require('../../build/contracts/DDToken.json')
 const Mediator = require('../../build/contracts/Mediator.json')
 
 var accounts, net, chain
-const nTx = 100;
+const nTx = 10;
 var ended = new Array(nTx).fill(0)
 var endedTxs = 0
 var results = new Array(nTx)
@@ -18,12 +18,12 @@ const init = async () => {
     medAt = Mediator.networks[net].address
     med = new web3.eth.Contract(Mediator.abi, medAt)
 
-    console.log(`Network ID is ${net}, Chain ID is ${chain}.`)
+    /* console.log(`Network ID is ${net}, Chain ID is ${chain}.`)
     console.log(`Mediator is on ${medAt}`)
     console.log(`Token is on ${tokAt}`)
     console.log(`Set of accounts is:`)
     accounts.map(acc => { console.log(`\n${acc}`) })
-    console.log('Account sending the transactions: ', accounts[0], '\n');
+    console.log('Account sending the transactions: ', accounts[0], '\n'); */
 };
 
 let c = init().then(async function () {
@@ -59,9 +59,12 @@ function writeJSON() {
         let maxLatency = results[0]['returnTime'] - results[0]['sentTime']
         let max = results[0]['sentTime']
         let min = results[0]['returnTime']
+        //ADD AVERAGE GAS PER TX
+        let accumGas = 0
         for (let id = 0; id < nTx; id++) {
             sentTime = results[id]['sentTime']
             returnTime = results[id]['returnTime']
+            accumGas += parseInt(results[id]['gasUsed'])
             if (sentTime < min) min = sentTime;
             if (returnTime > max) max = returnTime;
             if (!blockNumbers.includes(results[id]['blockNumber'])) blockNumbers.push(results[id]['blockNumber'])
@@ -72,6 +75,7 @@ function writeJSON() {
             if (latency > maxLatency) maxLatency = latency;
         }
         console.log(`Completed ${nTx} transactions in ${max - min}ms.`)
+        console.log(`Average gas used: ${accumGas/nTx}`)
         console.log(`${nTx / ((max - min) / 1000)} tx/s`)
         blocksToPrint = `in ${blockNumbers.length} blocks: `
         for (let id = 0; id < blockNumbers.length; id++) {
@@ -116,7 +120,7 @@ function sendTx(nonce) {
             //.once('sending', function(payload){ results[id]['sendingTime']=Date.now() })
             .once('sent', function (payload) {
                 results[id]['sentTime'] = Date.now()
-                console.log(`sent transaction ${id}`)
+                //console.log(`sent transaction ${id}`)
             })
             .once('transactionHash', function (hash) {
                 results[id]['hashTime'] = Date.now()
@@ -127,9 +131,10 @@ function sendTx(nonce) {
                 results[id]['blockNumber'] = receipt.blockNumber
                 results[id]['txIndex'] = receipt.transactionIndex
                 results[id]['status'] = receipt.status
+                results[id]['gasUsed'] = receipt.gasUsed
                 //ended[id] += 1
                 endedTxs += 1;
-                console.log(`ending transaction ${id}`)
+                //console.log(`ending transaction ${id}`)
                 writeJSON();
             })
     }
