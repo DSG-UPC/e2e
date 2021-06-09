@@ -4,10 +4,10 @@ const DDToken = require('../../build/contracts/DDToken.json')
 const Mediator = require('../../build/contracts/Mediator.json')
 
 var accounts, net, chain
-const nTx = 10;
+const nTx = process.argv[2];
 var ended = new Array(nTx).fill(0)
 var endedTxs = 0
-var results = new Array(nTx)
+var results = new Array(nTx+1)
 
 const init = async () => {
     net = await web3.eth.net.getId()
@@ -26,7 +26,8 @@ const init = async () => {
     console.log('Account sending the transactions: ', accounts[0], '\n'); */
 };
 
-let c = init().then(async function () {
+let c = init()
+.then(async function () {
     let nonce = await web3.eth.getTransactionCount(accounts[0]);
     //console.log(nonce);
     /*
@@ -37,22 +38,19 @@ let c = init().then(async function () {
       }
     }*/
     sendTx(nonce);
-});
+    //console.log(`Experiment ended. ${nTx} transactions executed.`)
+})
 
 function writeJSON() {
     // var sum = ended.reduce(function (a, b) {
     //     return a + b;
     // }, 0);
     if (endedTxs == nTx) {
-        const json = JSON.stringify(results, null, "\t");
-        //console.log(json);
-        fs.writeFile('./results.json', json, err => {
-            if (err) {
-                console.log('Error writing file', err)
-            } else {
-                console.log('Successfully wrote file')
-            }
-        })
+        const totalTime = fs.createWriteStream(`totalTime-${nTx}-Tx.txt`, {flags:'a'})
+        const totalRate = fs.createWriteStream(`totalRate-${nTx}-Tx.txt`, {flags:'a'})
+        const times = fs.createWriteStream(`times.txt`, {flags:'a'})
+        const rates = fs.createWriteStream(`rates.txt`, {flags:'a'})
+    
         let blockNumbers = []
         let latencies = []
         let minLatency = results[0]['returnTime'] - results[0]['sentTime']
@@ -74,6 +72,21 @@ function writeJSON() {
             if (latency < minLatency) minLatency = latency;
             if (latency > maxLatency) maxLatency = latency;
         }
+
+        results[nTx] = {}
+        results[nTx]['x'] = nTx
+        results[nTx]['totalTime'] = max - min
+        results[nTx]['totalRate'] = nTx / ((max - min) / 1000)
+        const json = JSON.stringify(results, null, "\t");
+        console.log(json)
+        fs.writeFile(`./results-${nTx}.json`, json, err => {
+            if (err) {
+                console.log('Error writing file', err)
+            } else {
+                console.log('Successfully wrote file')
+            }
+        })
+
         console.log(`Completed ${nTx} transactions in ${max - min}ms.`)
         console.log(`Average gas used: ${accumGas/nTx}`)
         console.log(`${nTx / ((max - min) / 1000)} tx/s`)
@@ -85,6 +98,14 @@ function writeJSON() {
             return a + b;
         }, 0);
         avgLatency = latencySum / nTx
+
+        totalTime.write(`${max - min}\n`)
+        totalRate.write(`${nTx / ((max - min) / 1000)}\n`)
+        let obj = {x:parseInt(nTx), y:max-min}
+        times.write(`${JSON.stringify(obj)}\n`)
+        obj = {x:parseInt(nTx), y:nTx / ((max - min) / 1000)}
+        rates.write(`${JSON.stringify(obj)}\n`)
+
         console.log(blocksToPrint)
         console.log(`Average latency per transaction: ${avgLatency}ms`)
         console.log(`Minimum transaction latency: ${minLatency}ms`)
@@ -115,7 +136,7 @@ function sendTx(nonce) {
             from: accounts[0],
             to: tokAt,
             gas: 200000,
-            data: tok.methods.transfer(accounts[2], 50).encodeABI()
+            data: tok.methods.transfer(accounts[2], 1).encodeABI()
         })
             //.once('sending', function(payload){ results[id]['sendingTime']=Date.now() })
             .once('sent', function (payload) {
