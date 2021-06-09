@@ -61,6 +61,13 @@ module.exports = {
       gasPrice: 0,
       gas: 4700000
     },
+    testbedalt: {
+      host: "45.150.187.29",
+      port: 8545,
+      network_id: 456,
+      gasPrice: 0,
+      gas: 4700000
+    },
     // Another network with more advanced options...
     // advanced: {
     // port: 8777,             // Custom port
