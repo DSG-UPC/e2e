@@ -24,11 +24,6 @@ fs.readFile(`times.txt`, 'utf8', (err, data) => {
 
   steps.map(x => {
     let ys = timeSamples.filter(pair => pair['x'] == x)
-
-    /* let partial = 0
-    ys.map(pair => partial += pair['y'])
-    timeAverages.push(JSON.parse(`{"x":${x},"y":${partial / ys.length}}`)) */
-
     let partial = []
     ys.map(pair => partial.push(pair['y']))
     timeAverages.push(JSON.parse(`{"x":${x},"y":${math.median(partial)}}`))
@@ -100,11 +95,6 @@ fs.readFile(`rates.txt`, 'utf8', (err, data) => {
 
   steps.map(x => {
     let ys = rateSamples.filter(pair => pair['x'] == x)
-
-   /*  let partial = 0
-    ys.map(pair => partial += pair['y'])
-    rateAverages.push(JSON.parse(`{"x":${x},"y":${partial / ys.length}}`)) */
-
     let partial = []
     ys.map(pair => partial.push(pair['y']))
     rateAverages.push(JSON.parse(`{"x":${x},"y":${math.median(partial)}}`))
